@@ -3,9 +3,30 @@
 // Vertex shader
 const vertexShaderSource = `
 attribute vec3 vertex;
+attribute vec3 normal;
+varying vec3 normalI;
 uniform mat4 ModelViewProjectionMatrix;
+uniform mat4 NormalMatrix;
+varying vec4 color;
+uniform vec3 light;
+
 
 void main() {
+    normalI = vec3(vec4(normal,0.)*NormalMatrix);
+    vec3 N = normalize(normalI);
+    vec3 L = normalize(light - vertex);
+    float dotP = max(dot(N,L),0.);
+    float spec = 0.;
+    if(dotP>0.){
+        vec3 R = reflect(-L, N);
+        vec3 V = normalize(-vertex);
+        float specAngle = max(dot(R,V), 0.);
+        spec = pow(specAngle,1.);
+    }
+    vec3 ambient = vec3(0.,0.1,0.1);
+    vec3 diffuse = vec3(0.,1.,1.);
+    vec3 specular = vec3(0.,0.,0.);
+    color = vec4(0.75*(ambient+dotP*diffuse+specular),1.);
     gl_Position = ModelViewProjectionMatrix * vec4(vertex,1.0);
 }`;
 
@@ -18,7 +39,7 @@ const fragmentShaderSource = `
    precision mediump float;
 #endif
 
-uniform vec4 color;
+varying vec4 color;
 void main() {
     gl_FragColor = color;
 }`;
